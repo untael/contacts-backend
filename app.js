@@ -36,31 +36,14 @@ app.use(morgan('dev'))
 // basic route
 app.get('/', (req, res) => res.send('Hello World!'))
 
-// display contact
-app.get('/display', function (req, res) {
-  const contact = {
-    name: 'Petrov',
-    surname: 'Sergei',
-    middlename: 'Ivanovich',
-    birthday: 'Sep 26 2018',
-    gender: 'Male',
-    family: 'Single',
-    country: 'Belarus',
-    city: 'Minsk',
-    zip: '110000',
-    address: 'Valenova 37-4/1',
-    email: 'testmail@mail.com',
-    website: 'testsite',
-    job: 'Programmer',
-    about: 'Programming 99 years',
-  }
-  console.log(contact)
-  res.send(contact)
-})
-
+//CONTACT ACTIONS
 // list of contacts
-app.get('/list', function (req, res) {
+app.post('/list', function (req, res) {
+  const pageNumber = req.body.pageNumber
+  const contactsPerPage = 10
   Contact.find({})
+    .skip(pageNumber > 0 ? ((pageNumber - 1) * contactsPerPage) : 0)
+    .limit(contactsPerPage)
     .then(contacts => {
       // Presenter
       const contactsToPresent = contacts.map(contact => {
@@ -82,37 +65,137 @@ app.get('/list', function (req, res) {
           about: contact.about,
         }
       })
-      // const json = JSON.stringify(contactsToPresent)
+      const json = JSON.stringify(contactsToPresent)
       res.send(contactsToPresent)
       console.log(contactsToPresent)
     })
 })
 
+// list of contacts after search
+app.post('/search', function (req, res) {
+  console.log(req.body)
+  Contact.find(
+    req.body.contact,
+    function () {
+    },
+  )
+    .then(contacts => {
+      // Presenter
+      const contactsToPresent = contacts.map(contact => {
+        return {
+          id: contact._id,
+          name: contact.name,
+          surname: contact.surname,
+          middlename: contact.middlename,
+          birthday: contact.birthday,
+          gender: contact.gender,
+          family: contact.family,
+          country: contact.country,
+          city: contact.city,
+          zip: contact.zip,
+        }
+      })
+      // const json = JSON.stringify(contactsToPresent)
+      res.send(contactsToPresent)
+    })
+})
 
 // create contact
 app.post('/create', function (req, res) {
-  const contact = new Contact({
-    name: req.body.contact.name,
-    surname: req.body.contact.surname,
-    middlename: req.body.contact.middlename,
-    birthday: req.body.contact.birthday,
-    gender: req.body.contact.gender,
-    family: req.body.contact.family,
-    country: req.body.contact.country,
-    city: req.body.contact.city,
-    zip: req.body.contact.zip,
-    address: req.body.contact.address,
-    email: req.body.contact.email,
-    website: req.body.contact.website,
-    job: req.body.contact.job,
-    about: req.body.contact.about,
-  })
-  contact.save()
-    .then(contact => {
-      console.log(contact)
+  console.log(req.body.contact.id)
+  if (req.body.contact.id) {
+    const contact = new Contact({
+      _id: req.body.contact.id,
     })
-    .catch(e => console.log(e))
-  res.send(contact)
+    Contact.findOneAndUpdate(contact._id, {
+        $set: {
+          name: req.body.contact.name,
+          surname: req.body.contact.surname,
+          middlename: req.body.contact.middlename,
+          birthday: req.body.contact.birthday,
+          gender: req.body.contact.gender,
+          family: req.body.contact.family,
+          country: req.body.contact.country,
+          city: req.body.contact.city,
+          zip: req.body.contact.zip,
+          address: req.body.contact.address,
+          email: req.body.contact.email,
+          website: req.body.contact.website,
+          job: req.body.contact.job,
+          about: req.body.contact.about,
+        },
+      },
+      { new: true }, function (err, contact) {
+        if (err) return handleError(err)
+        res.send(contact)
+        console.log('contact', contact)
+      })
+  } else {
+    const contact = new Contact({
+      name: req.body.contact.name,
+      surname: req.body.contact.surname,
+      middlename: req.body.contact.middlename,
+      birthday: req.body.contact.birthday,
+      gender: req.body.contact.gender,
+      family: req.body.contact.family,
+      country: req.body.contact.country,
+      city: req.body.contact.city,
+      zip: req.body.contact.zip,
+      address: req.body.contact.address,
+      email: req.body.contact.email,
+      website: req.body.contact.website,
+      job: req.body.contact.job,
+      about: req.body.contact.about,
+    })
+    contact.save()
+      .then(contact => {
+        console.log(contact)
+      })
+      .catch(e => console.log(e))
+    res.send(contact)
+    // console.log('contact', contact)
+  }
+})
+
+// update contact
+app.post('/update', function (req, res) {
+  const contact = new Contact({
+    _id: req.body.contact.id,
+  })
+  Contact.findOneAndUpdate(contact._id, {
+      $set: {
+        name: req.body.contact.name,
+        surname: req.body.contact.surname,
+        middlename: req.body.contact.middlename,
+        birthday: req.body.contact.birthday,
+        gender: req.body.contact.gender,
+        family: req.body.contact.family,
+        country: req.body.contact.country,
+        city: req.body.contact.city,
+        zip: req.body.contact.zip,
+        address: req.body.contact.address,
+        email: req.body.contact.email,
+        website: req.body.contact.website,
+        job: req.body.contact.job,
+        about: req.body.contact.about,
+      },
+    },
+    { new: true }, function (err, contact) {
+      if (err) return handleError(err)
+      res.send(contact)
+    })
+})
+
+// delete contact
+app.post('/delete', function (req, res) {
+  const contact = new Contact({
+    id: req.body.contactId,
+  })
+  Contact.find({
+    _id: contact.id,
+  })
+    .deleteOne().then(_ => console.log('Removed'))
+  res.send('Successfully removed')
 })
 
 app.listen(3000, () => console.log('Example app listening on port 3000!'))
