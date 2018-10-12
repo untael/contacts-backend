@@ -48,6 +48,10 @@ let contactSchema = new Schema({
   about: {
     type: String,
   },
+  image: {
+    data: Buffer,
+    contentType: String,
+  },
   phones: {
     type: [Number],
   },
