@@ -53,7 +53,7 @@ let contactSchema = new Schema({
     contentType: String,
   },
   phones: {
-    type: [Number],
+    type: Array,
   },
 })
 
